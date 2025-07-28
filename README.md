@@ -1,7 +1,7 @@
 ## FFT on the GPU
 
-This is an optimized GPU-based 2D FFT for VRChat. Since it uses Custom
-RenderTextures (CRTs), it is only suitable for use in worlds.
+This is an optimized GPU-based 2D FFT for VRChat. Since it uses RenderTextures,
+it is only suitable for use in worlds.
 
 Please take note that the FFT is generated in bit-reversed order. You'll have
 to bit-reverse your indices when accessing it. See `apply_2d_bit_reversal` in
@@ -9,7 +9,7 @@ to bit-reverse your indices when accessing it. See `apply_2d_bit_reversal` in
 
 ### Quick start
 
-Import the unitypackage and open the scene.
+Clone the repo into your unity project. Open the scene.
 
 Run CPU simulator:
 
