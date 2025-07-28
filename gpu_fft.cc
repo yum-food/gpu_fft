@@ -15,6 +15,13 @@
 #include <random>
 #include <vector>
 
+struct float2 {
+  float x, y;
+};
+#define GPU_FFT_RADIX16
+#define GPU_FFT_RADIX16_N256
+#include "fft_twiddle_tables.cginc"
+
 // This is a reference Cooley-Tukey FFT implementation. It's just here to check
 // for correctness.
 std::vector<std::complex<float>> fft1d_naive(
@@ -110,8 +117,32 @@ unsigned int reverse_digits(unsigned int n, unsigned int num_digits, unsigned in
 // Compute twiddle factor W_N^k = exp(-2*pi*i*k/N) for forward FFT
 // or exp(+2*pi*i*k/N) for inverse FFT
 gpu_complex twiddle_factor(int k, int N, bool inverse = false) {
-  float angle = (inverse ? 2.0f : -2.0f) * std::numbers::pi * k / N;
-  return {std::cos(angle), std::sin(angle)};
+  // Use double precision for angle computation, then cast to float
+  // This matches how the precomputed tables were generated
+  double angle = (inverse ? 2.0 : -2.0) * std::numbers::pi * k / N;
+  return {(float)std::cos(angle), (float)std::sin(angle)};
+}
+
+// Helper to compute radix^power using integer arithmetic
+int int_pow(int base, int exp) {
+  int result = 1;
+  for (int i = 0; i < exp; ++i) {
+    result *= base;
+  }
+  return result;
+}
+
+// Apply 2D bit reversal to the output
+void apply_2d_bit_reversal(const int n, const int radix, const stage_texture& in, stage_texture& out) {
+  const int num_digits = std::log2(n) / std::log2(radix);
+
+  for (int y = 0; y < n; ++y) {
+    for (int x = 0; x < n; ++x) {
+      const int rev_x = reverse_digits(x, num_digits, radix);
+      const int rev_y = reverse_digits(y, num_digits, radix);
+      out[y][x] = in[rev_y][rev_x];
+    }
+  }
 }
 
 // Main shader function - simplified for GPU/HLSL conversion
@@ -183,72 +214,27 @@ void evaluate_stage(
   }
 }
 
-// Apply 2D bit reversal to the output
-void apply_2d_bit_reversal(const int n, const int radix, const stage_texture& in, stage_texture& out) {
-  const int num_digits = std::log2(n) / std::log2(radix);
-
-  for (int y = 0; y < n; ++y) {
-    for (int x = 0; x < n; ++x) {
-      const int rev_x = reverse_digits(x, num_digits, radix);
-      const int rev_y = reverse_digits(y, num_digits, radix);
-      out[y][x] = in[rev_y][rev_x];
-    }
-  }
-}
-
-// Precompute twiddle factors for a given radix
-std::vector<std::vector<gpu_complex>> compute_twiddle_factors(int radix, bool inverse = false) {
-  std::vector<std::vector<gpu_complex>> twiddle_factors(radix,
-      std::vector<gpu_complex>(radix));
-  for (int k = 0; k < radix; ++k) {
-    for (int n = 0; n < radix; ++n) {
-      twiddle_factors[k][n] = twiddle_factor(k * n, radix, inverse);
-    }
-  }
-  return twiddle_factors;
-}
-
-// Helper to compute radix^power using integer arithmetic
-int int_pow(int base, int exp) {
-  int result = 1;
-  for (int i = 0; i < exp; ++i) {
-    result *= base;
-  }
-  return result;
-}
-
-// Precompute stage twiddle factors
-std::vector<gpu_complex> compute_stage_twiddles(int butterfly_size, bool inverse = false) {
-  std::vector<gpu_complex> stage_twiddles(butterfly_size);
-  for (int i = 0; i < butterfly_size; ++i) {
-    stage_twiddles[i] = twiddle_factor(i, butterfly_size, inverse);
-  }
-  return stage_twiddles;
-}
-
-// Evaluate all stages.
+// Evaluate all stages - unified function
 void evaluate_stages(
     const int n,
     const int radix,
     const bool inverse,
-    std::vector<stage_texture>& textures) {
-  const std::vector<std::vector<gpu_complex>> twiddle_factors =
-    compute_twiddle_factors(radix, inverse);
+    std::vector<stage_texture>& textures,
+    const std::vector<std::vector<gpu_complex>>& dft_matrix,
+    const std::vector<std::vector<gpu_complex>>& stage_twiddles_array) {
 
   const int num_stages_per_dim = std::log2(n) / std::log2(radix);
   const int num_stages = num_stages_per_dim * 2;
 
   for (int stage = 0; stage < num_stages; ++stage) {
-    // Compute span and butterfly_size for this stage
     int current_stage = (stage < num_stages_per_dim) ? stage : (stage - num_stages_per_dim);
     int span = n / int_pow(radix, current_stage + 1);
     int butterfly_size = span * radix;
 
-    // Precompute stage twiddle factors
-    std::vector<gpu_complex> stage_twiddles = compute_stage_twiddles(butterfly_size, inverse);
+    const std::vector<gpu_complex>& stage_twiddles = stage_twiddles_array[current_stage];
 
     ShaderUniforms uniforms = {n, radix, stage, num_stages_per_dim, span, butterfly_size,
-                               inverse, twiddle_factors, stage_twiddles};
+                               inverse, dft_matrix, stage_twiddles};
     evaluate_stage(uniforms, textures[stage], textures[stage+1]);
   }
 
@@ -266,6 +252,165 @@ void evaluate_stages(
       }
     }
   }
+}
+
+// Precompute twiddle factors for a given radix
+std::vector<std::vector<gpu_complex>> compute_twiddle_factors(int radix, bool inverse = false) {
+  std::vector<std::vector<gpu_complex>> twiddle_factors(radix,
+      std::vector<gpu_complex>(radix));
+  for (int k = 0; k < radix; ++k) {
+    for (int n = 0; n < radix; ++n) {
+      twiddle_factors[k][n] = twiddle_factor(k * n, radix, inverse);
+    }
+  }
+  return twiddle_factors;
+}
+
+// Precompute stage twiddle factors
+std::vector<gpu_complex> compute_stage_twiddles(int butterfly_size, bool inverse = false) {
+  std::vector<gpu_complex> stage_twiddles(butterfly_size);
+  for (int i = 0; i < butterfly_size; ++i) {
+    stage_twiddles[i] = twiddle_factor(i, butterfly_size, inverse);
+  }
+  return stage_twiddles;
+}
+
+// Convert float2 arrays to gpu_complex vectors
+std::vector<std::vector<gpu_complex>> convert_dft_matrix(bool inverse = false) {
+  std::vector<std::vector<gpu_complex>> result(16, std::vector<gpu_complex>(16));
+  for (int i = 0; i < 16; ++i) {
+    for (int j = 0; j < 16; ++j) {
+      if (inverse) {
+        result[i][j] = {IDFT_MATRIX[i][j].x, IDFT_MATRIX[i][j].y};
+      } else {
+        result[i][j] = {DFT_MATRIX[i][j].x, DFT_MATRIX[i][j].y};
+      }
+    }
+  }
+  return result;
+}
+
+std::vector<gpu_complex> convert_stage_twiddles(int stage, bool inverse = false) {
+  if (stage == 0) { // butterfly_size = 256
+    std::vector<gpu_complex> result(256);
+    for (int i = 0; i < 256; ++i) {
+      if (inverse) {
+        result[i] = {STAGE0_TWIDDLES_INV[i].x, STAGE0_TWIDDLES_INV[i].y};
+      } else {
+        result[i] = {STAGE0_TWIDDLES[i].x, STAGE0_TWIDDLES[i].y};
+      }
+    }
+    return result;
+  } else { // stage == 1, butterfly_size = 16
+    std::vector<gpu_complex> result(16);
+    for (int i = 0; i < 16; ++i) {
+      if (inverse) {
+        result[i] = {STAGE1_TWIDDLES_INV[i].x, STAGE1_TWIDDLES_INV[i].y};
+      } else {
+        result[i] = {STAGE1_TWIDDLES[i].x, STAGE1_TWIDDLES[i].y};
+      }
+    }
+    return result;
+  }
+}
+
+// Wrapper for computed twiddles
+void evaluate_stages_computed(
+    const int n,
+    const int radix,
+    const bool inverse,
+    std::vector<stage_texture>& textures) {
+
+  const std::vector<std::vector<gpu_complex>> dft_matrix =
+    compute_twiddle_factors(radix, inverse);
+
+  // Precompute all stage twiddles
+  const int num_stages_per_dim = std::log2(n) / std::log2(radix);
+  std::vector<std::vector<gpu_complex>> stage_twiddles_array(num_stages_per_dim);
+
+  for (int stage = 0; stage < num_stages_per_dim; ++stage) {
+    int span = n / int_pow(radix, stage + 1);
+    int butterfly_size = span * radix;
+    stage_twiddles_array[stage] = compute_stage_twiddles(butterfly_size, inverse);
+  }
+
+  evaluate_stages(n, radix, inverse, textures, dft_matrix, stage_twiddles_array);
+}
+
+// Wrapper for precomputed twiddles
+void evaluate_stages_precomputed(
+    const int n,
+    const int radix,
+    const bool inverse,
+    std::vector<stage_texture>& textures,
+    const std::vector<std::vector<gpu_complex>>& precomputed_dft_matrix) {
+
+  // Convert precomputed stage twiddles
+  const int num_stages_per_dim = std::log2(n) / std::log2(radix);
+  std::vector<std::vector<gpu_complex>> stage_twiddles_array(num_stages_per_dim);
+
+  for (int stage = 0; stage < num_stages_per_dim; ++stage) {
+    stage_twiddles_array[stage] = convert_stage_twiddles(stage, inverse);
+  }
+
+  evaluate_stages(n, radix, inverse, textures, precomputed_dft_matrix, stage_twiddles_array);
+}
+
+// Verify FFT results match between computed and precomputed tables
+bool verify_fft_with_tables(std::mt19937& rng) {
+  const int n = 256;
+  const int radix = 16;
+  const int NUM_STAGES = (std::log2(n) / std::log2(radix)) * 2;
+
+  // Initialize test data
+  const std::vector<std::vector<gpu_complex>> black_texture(n,
+      std::vector<gpu_complex>(n, {0, 0}));
+  std::vector<stage_texture> textures_computed(NUM_STAGES + 1, black_texture);
+  std::vector<stage_texture> textures_precomputed(NUM_STAGES + 1, black_texture);
+
+  // Fill with identical random data
+  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+  for (int y = 0; y < n; ++y) {
+    for (int x = 0; x < n; ++x) {
+      float real = dist(rng);
+      float imag = dist(rng);
+      textures_computed[0][y][x] = {real, imag};
+      textures_precomputed[0][y][x] = {real, imag};
+    }
+  }
+
+  // Run FFT with computed tables
+  evaluate_stages_computed(n, radix, false, textures_computed);
+
+  // Run FFT with precomputed tables from cginc
+  auto dft_matrix = convert_dft_matrix(false);
+  evaluate_stages_precomputed(n, radix, false, textures_precomputed, dft_matrix);
+
+  // Compare results
+  float max_error = 0.0f;
+  int mismatch_count = 0;
+  for (int y = 0; y < n; ++y) {
+    for (int x = 0; x < n; ++x) {
+      float err_real = std::abs(textures_computed[NUM_STAGES][y][x].first -
+                                textures_precomputed[NUM_STAGES][y][x].first);
+      float err_imag = std::abs(textures_computed[NUM_STAGES][y][x].second -
+                                textures_precomputed[NUM_STAGES][y][x].second);
+      max_error = std::max(max_error, std::max(err_real, err_imag));
+      if (err_real > 1e-6f || err_imag > 1e-6f) {
+        mismatch_count++;
+      }
+    }
+  }
+
+  std::cout << "FFT max error between computed and precomputed tables: "
+            << std::scientific << max_error << std::fixed << std::endl;
+
+  if (mismatch_count > 0) {
+    std::cout << "ERROR: " << mismatch_count << " pixels have error > 1e-6" << std::endl;
+    return false;
+  }
+
+  return true;
 }
 
 bool check_result(
@@ -361,7 +506,7 @@ bool evaluateAlgorithm(const int n, const int radix, const bool inverse, std::mt
 
   // Evaluate the GPU algorithm.
   auto start = std::chrono::high_resolution_clock::now();
-  evaluate_stages(n, radix, inverse, textures);
+  evaluate_stages_computed(n, radix, inverse, textures);
   auto end = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
@@ -418,13 +563,13 @@ bool testFFTInverse(const int n, const int radix, std::mt19937& rng) {
   stage_texture original_input = textures_fft[0];
 
   // Perform forward FFT
-  evaluate_stages(n, radix, false, textures_fft);
+  evaluate_stages_computed(n, radix, false, textures_fft);
 
   // Copy FFT result as input to inverse FFT
   textures_ifft[0] = textures_fft[NUM_STAGES];
 
   // Perform inverse FFT
-  evaluate_stages(n, radix, true, textures_ifft);
+  evaluate_stages_computed(n, radix, true, textures_ifft);
 
   // Check if inverse FFT gives back the original input
   float max_error = 0.0f;
@@ -436,7 +581,7 @@ bool testFFTInverse(const int n, const int radix, std::mt19937& rng) {
     }
   }
 
-  const float epsilon = 1e-3; // Tolerance for round-trip error
+  const float epsilon = 1e-5; // Tolerance for round-trip error
   bool success = (max_error < epsilon);
 
   if (!success) {
@@ -464,6 +609,14 @@ bool testFFTInverse(const int n, const int radix, std::mt19937& rng) {
 
 int main() {
   std::mt19937 rng(std::random_device{}());
+
+  // Verify FFT results match with precomputed tables
+  std::cout << "Verifying FFT with precomputed tables from fft_twiddle_tables.cginc..." << std::endl;
+  if (!verify_fft_with_tables(rng)) {
+    std::cout << "ERROR: FFT results do not match between computed and precomputed tables!" << std::endl;
+    return 1;
+  }
+  std::cout << "FFT verification passed!\n" << std::endl;
 
   // First run the original forward FFT tests
   std::cout << "Testing forward FFT correctness against reference implementation..." << std::endl;
