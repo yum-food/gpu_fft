@@ -7,6 +7,7 @@ Shader "yum_food/fft"
         _Radix ("Radix", Int) = 16
         _Stage ("Stage", Int) = 0
         [Toggle] _PassThrough ("Pass Through", Float) = 0
+        [Toggle] _LDS ("Temporal LDS", Float) = 0
         [Toggle] _Inverse ("Inverse FFT", Float) = 0
     }
     SubShader
@@ -47,7 +48,10 @@ Shader "yum_food/fft"
             int _Radix;
             int _Stage;
             float _PassThrough;
+            float _LDS;
             float _Inverse;
+
+            #define PHI 1.618033988749894
 
             // Helper function to compute integer power
             int int_pow(int base, int exp)
@@ -91,11 +95,12 @@ Shader "yum_food/fft"
                 // If pass through is enabled, just return the input
                 if (_PassThrough > 0.5)
                 {
-#if 0
-                  float lum = luminance(_MainTex.SampleLevel(point_clamp_s, uv, 0).rgb);
-#else
-                  float lum = luminance(_MainTex.SampleLevel(point_clamp_s, i.uv, 0).rgb);
-#endif
+                  float3 col = _MainTex.SampleLevel(point_clamp_s, uv, 0).rgb;
+                  if (_LDS > 0.5) {
+                    col += PHI * _Time[0];
+                    col = frac(col);
+                  }
+                  float lum = luminance(col);
                   return float4(lum, lum, lum, 1);
                 }
 
