@@ -18,9 +18,12 @@ def main():
 
     # Load input image and convert to luminance
     img = Image.open(args.input).convert('RGB')
-    img = img.resize((args.size, args.size), Image.Resampling.LANCZOS)
+    img = img.resize((args.size, args.size), Image.Resampling.NEAREST)
     img_array = np.array(img, dtype=np.float32) / 255.0
     luminance = 0.2126 * img_array[:,:,0] + 0.7152 * img_array[:,:,1] + 0.0722 * img_array[:,:,2]
+
+    # Unity's UV origin is bottom-left, NumPy/PIL's is top-left; flip vertically to align
+    luminance = np.flipud(luminance)
 
     # Perform 2D FFT (no fftshift, matching GPU implementation)
     fft_result = np.fft.fft2(luminance)
@@ -29,6 +32,10 @@ def main():
     # R: real part, G: imaginary part, B: 0, A: 1
     real_part = fft_result.real.astype(np.float32)
     imag_part = fft_result.imag.astype(np.float32)
+
+    # Unity's output texture also uses bottom-left origin, so flip output too
+    real_part = np.flipud(real_part)
+    imag_part = np.flipud(imag_part)
 
     # Create EXR
     height, width = args.size, args.size
