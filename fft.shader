@@ -7,6 +7,7 @@ Shader "yum_food/fft"
         _Radix ("Radix", Int) = 16
         _Stage ("Stage", Int) = 0
         [Toggle] _PassThrough ("Pass Through", Float) = 0
+        [Toggle] _Inverse ("Inverse FFT", Float) = 0
     }
     SubShader
     {
@@ -37,15 +38,16 @@ Shader "yum_food/fft"
                 int num_stages_per_dim : TEXCOORD1;
                 int span : TEXCOORD2;
                 int butterfly_size : TEXCOORD3;
+                int num_stages : TEXCOORD4;
             };
 
             texture2D _MainTex;
-            float4 _MainTex_ST;
-            SamplerState point_repeat_s;
+            SamplerState point_clamp_s;
             int _N;
             int _Radix;
             int _Stage;
             float _PassThrough;
+            float _Inverse;
 
             // Helper function to compute integer power
             int int_pow(int base, int exp)
@@ -65,7 +67,7 @@ Shader "yum_food/fft"
                 o.uv = v.uv;
 
                 // Calculate num_stages_per_dim = log_radix(N)
-                o.num_stages_per_dim = (int)(log(_N) / log(_Radix) + 0.5);
+                o.num_stages_per_dim = (int)(log(_N) / log(_Radix));
 
                 // Determine current stage (0-based index within row or column passes)
                 int current_stage = (_Stage < o.num_stages_per_dim) ? _Stage : (_Stage - o.num_stages_per_dim);
@@ -83,15 +85,21 @@ Shader "yum_food/fft"
 
             fixed4 frag (v2f i) : SV_Target
             {
+                int2 pixel_index = (int2)(i.uv * _N);
+                float2 uv = (pixel_index + 0.5f) / _N;
+
                 // If pass through is enabled, just return the input
                 if (_PassThrough > 0.5)
                 {
-                  return _MainTex.SampleLevel(point_repeat_s, i.uv, 0);
+#if 0
+                  float lum = luminance(_MainTex.SampleLevel(point_clamp_s, uv, 0).rgb);
+#else
+                  float lum = luminance(_MainTex.SampleLevel(point_clamp_s, i.uv, 0).rgb);
+#endif
+                  return float4(lum, lum, lum, 1);
                 }
-                const float n2 = _N * _N;
 
                 // Calculate pixel index from UV coordinates
-                int2 pixel_index = int2(floor(i.uv * _N));
                 int x = pixel_index.x;
                 int y = pixel_index.y;
 
@@ -122,24 +130,23 @@ Shader "yum_food/fft"
                     }
                     else
                     {
-                        input_uv = float2(i.uv.x, (input_pos + 0.5) / (float)_N);
+                        float xuv = (x + 0.5) / _N;
+                        input_uv = float2(xuv, (input_pos + 0.5) / (float)_N);
                     }
 
                     // Read input value
-                    float4 input_tex = _MainTex.SampleLevel(point_repeat_s, input_uv, 0);
+                    float4 input_tex = _MainTex.SampleLevel(point_clamp_s, input_uv, 0);
                     float2 input_val;
                     if (_Stage == 0) {
                       input_val.x = luminance(input_tex.xyz);
                       input_val.y = 0;
                     } else {
-                      // Remap onto [-1, 1]
-                      input_tex = input_tex * 2.0f - 1.0f;
-                      input_val.x = input_tex.x * n2 + input_tex.y;
-                      input_val.y = input_tex.z * n2 + input_tex.w;
+                      input_val.x = input_tex.x + input_tex.y;
+                      input_val.y = input_tex.z + input_tex.w;
                     }
 
-                    // Read DFT coefficient from the table
-                    float2 coeff = DFT_MATRIX[wing][j];
+                    // Read DFT coefficient from the table (use inverse matrix if _Inverse is set)
+                    float2 coeff = _Inverse > 0.5 ? IDFT_MATRIX[wing][j] : DFT_MATRIX[wing][j];
 
                     // Complex multiply-accumulate
                     sum.x += coeff.x * input_val.x - coeff.y * input_val.y;
@@ -150,7 +157,7 @@ Shader "yum_food/fft"
                 if (wing > 0 && idx_in_wing > 0)
                 {
                     int twiddle_idx = wing * idx_in_wing;
-                    float2 tw = STAGE_TWIDDLES[twiddle_idx];
+                    float2 tw = _Inverse > 0.5 ? STAGE_TWIDDLES_INV[twiddle_idx] : STAGE_TWIDDLES[twiddle_idx];
 
                     // Output = twiddle * sum
                     float2 output;
@@ -163,23 +170,17 @@ Shader "yum_food/fft"
                 float real_part = sum.x;
                 float imag_part = sum.y;
 
+                if (_Inverse > 0.5 && _Stage == i.num_stages_per_dim * 2 - 1) {
+                  // Last stage of IFFT is just back to the original real-valued signal.
+                  real_part /= _N * i.num_stages_per_dim;
+                  return float4(real_part, real_part, real_part, 1);
+                }
+
                 // Split into 2 parts.
                 float real_big   = floor(real_part);
                 float real_small = real_part - real_big;
                 float imag_big   = floor(imag_part);
                 float imag_small = imag_part - imag_big;
-
-                // Compress onto [-1,1].
-                // For an N*N FFT, the maximum value is N^2 and the min value
-                // is -N^2 / 2.
-                real_big /= n2;
-                imag_big /= n2;
-
-                // Map onto [0, 1].
-                real_big   = (real_big + 1.0f) * 0.5f;
-                real_small = (real_small + 1.0f) * 0.5f;
-                imag_big   = (imag_big + 1.0f) * 0.5f;
-                imag_small = (imag_small + 1.0f) * 0.5f;
 
                 return float4(real_big, real_small, imag_big, imag_small);
             }

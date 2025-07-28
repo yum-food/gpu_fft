@@ -1,3 +1,5 @@
 build
 fft_twiddle_tables.cginc
+.*.sw[po]
+*.meta
 
