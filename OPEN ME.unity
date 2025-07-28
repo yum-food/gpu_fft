@@ -928,12 +928,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 609077999}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3, y: 2, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 2.9579275, y: 0.8078251, z: -0.3419539}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1188641759}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &612474623
 GameObject:
@@ -1383,8 +1383,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 983355410}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.04207261, y: -1.1921749, z: -0.3419539}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1393,7 +1393,7 @@ Transform:
   - {fileID: 785989659}
   - {fileID: 562951497}
   - {fileID: 612474627}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1188641759}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1069902874
 GameObject:
@@ -1553,7 +1553,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1188641757}
-  sourceInput: {fileID: 2800000, guid: 63a789815b682614db57cb0280d1013b, type: 3}
+  sourceInput: {fileID: 2800000, guid: d0dba03849af9df4fae990e250f66246, type: 3}
   effectMaterials:
   - {fileID: 2100000, guid: caffb11975a532c48928f00ce876fda6, type: 2}
   - {fileID: 2100000, guid: 26596d311a37a3c45a64cee1c5576bd6, type: 2}
@@ -1592,7 +1592,10 @@ Transform:
   m_LocalPosition: {x: 0.04207261, y: 1.1921749, z: 0.3419539}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1717151656}
+  - {fileID: 609078003}
+  - {fileID: 983355411}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1242669366
@@ -1725,8 +1728,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1717151655}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.04207261, y: -1.1921749, z: -0.3419539}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1736,7 +1739,7 @@ Transform:
   - {fileID: 599917956}
   - {fileID: 773866680}
   - {fileID: 824710681}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1188641759}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1787983409
 GameObject:
@@ -1977,18 +1980,18 @@ MonoBehaviour:
   useAssignedLayers: 0
   DynamicPrefabs: []
   DynamicMaterials:
-  - {fileID: 2100000, guid: baecfb2a8397f824280169e46d6735f0, type: 2}
-  - {fileID: 2100000, guid: 26596d311a37a3c45a64cee1c5576bd6, type: 2}
-  - {fileID: 2100000, guid: ee0218d1bcfaf6e4dbd6bf9376beb306, type: 2}
-  - {fileID: 2100000, guid: ef7b3b20954e1f0419b7adf268df2650, type: 2}
-  - {fileID: 2100000, guid: 365ea70c6b535dc49b05bf0c1ff6ba5f, type: 2}
-  - {fileID: 2100000, guid: ee8f29cf44fa87f46a1417c25af26824, type: 2}
-  - {fileID: 2100000, guid: d924df630b01842449ed5cd5a8ffee97, type: 2}
-  - {fileID: 2100000, guid: de23af3d6f8065d4e89cb057b0cd99ec, type: 2}
-  - {fileID: 2100000, guid: 652ab864a0319244693b307366e8a107, type: 2}
-  - {fileID: 2100000, guid: 529b8b96dc28ae14381ede5d8ca8e97c, type: 2}
-  - {fileID: 2100000, guid: 1544f59a65453084d9689c1a3897174e, type: 2}
   - {fileID: 2100000, guid: caffb11975a532c48928f00ce876fda6, type: 2}
+  - {fileID: 2100000, guid: 26596d311a37a3c45a64cee1c5576bd6, type: 2}
+  - {fileID: 2100000, guid: baecfb2a8397f824280169e46d6735f0, type: 2}
+  - {fileID: 2100000, guid: ee8f29cf44fa87f46a1417c25af26824, type: 2}
+  - {fileID: 2100000, guid: 652ab864a0319244693b307366e8a107, type: 2}
+  - {fileID: 2100000, guid: 1544f59a65453084d9689c1a3897174e, type: 2}
+  - {fileID: 2100000, guid: d924df630b01842449ed5cd5a8ffee97, type: 2}
+  - {fileID: 2100000, guid: 365ea70c6b535dc49b05bf0c1ff6ba5f, type: 2}
+  - {fileID: 2100000, guid: ee0218d1bcfaf6e4dbd6bf9376beb306, type: 2}
+  - {fileID: 2100000, guid: 529b8b96dc28ae14381ede5d8ca8e97c, type: 2}
+  - {fileID: 2100000, guid: ef7b3b20954e1f0419b7adf268df2650, type: 2}
+  - {fileID: 2100000, guid: de23af3d6f8065d4e89cb057b0cd99ec, type: 2}
   - {fileID: 2100000, guid: be55571ca9818ba4c9b853a41baf33c7, type: 2}
   LightMapsNear: []
   LightMapsFar: []
@@ -2050,6 +2053,18 @@ MonoBehaviour:
     - VRC.Udon.UdonBehaviour
   - gameObject: {fileID: 1188641756}
     ID: 11
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 0}
+    ID: 12
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 0}
+    ID: 13
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 0}
+    ID: 14
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
   portraitCameraPositionOffset: {x: 0, y: 0, z: 0}
@@ -2172,6 +2187,3 @@ SceneRoots:
   - {fileID: 7606902903243430487}
   - {fileID: 358170790}
   - {fileID: 1188641759}
-  - {fileID: 1717151656}
-  - {fileID: 609078003}
-  - {fileID: 983355411}
