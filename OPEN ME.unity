@@ -1517,7 +1517,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1188641757}
-  sourceInput: {fileID: 2800000, guid: d0dba03849af9df4fae990e250f66246, type: 3}
+  sourceInput: {fileID: 2800000, guid: 63a789815b682614db57cb0280d1013b, type: 3}
   effectMaterials:
   - {fileID: 2100000, guid: caffb11975a532c48928f00ce876fda6, type: 2}
   - {fileID: 2100000, guid: 26596d311a37a3c45a64cee1c5576bd6, type: 2}

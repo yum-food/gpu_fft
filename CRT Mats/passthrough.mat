@@ -13,7 +13,6 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
-  - _LDS_ON
   - _LUMINANCE_ON
   - _PASSTHROUGH_ON
   m_LightmapFlags: 4
@@ -73,7 +72,7 @@ Material:
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _Inverse: 0
-    - _LDS: 1
+    - _LDS: 0
     - _Luminance: 1
     - _Metallic: 0
     - _Mode: 0

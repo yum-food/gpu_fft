@@ -42,8 +42,6 @@ public class LinearPipeline : UdonSharpBehaviour
 
     void Start()
     {
-        _ConfigurePipeline();
-
         if (runOnStart)
         {
             _RunPipeline();
@@ -59,48 +57,6 @@ public class LinearPipeline : UdonSharpBehaviour
     }
 
     /// <summary>
-    /// Configure materials for the pipeline.
-    /// </summary>
-    void _ConfigurePipeline()
-    {
-        if (effectMaterials == null || effectMaterials.Length == 0)
-        {
-            Debug.LogError("[LinearUdonPipeline] No Effect Materials have been assigned!", this);
-            return;
-        }
-
-        if (pipelineOutputs == null || pipelineOutputs.Length == 0)
-        {
-            Debug.LogError("[LinearUdonPipeline] No Pipeline Outputs have been assigned!", this);
-            return;
-        }
-
-        if (effectMaterials.Length != pipelineOutputs.Length)
-        {
-            Debug.LogError("[LinearUdonPipeline] The number of materials does not match the number of output textures!", this);
-            return;
-        }
-
-        // Configure materials - set _MainTex to appropriate source
-        for (int i = 0; i < effectMaterials.Length; i++)
-        {
-            if (effectMaterials[i] != null)
-            {
-                if (i == 0)
-                {
-                    // First material uses the source input
-                    effectMaterials[i].SetTexture("_MainTex", sourceInput);
-                }
-                else
-                {
-                    // Subsequent materials use the previous output as input
-                    effectMaterials[i].SetTexture("_MainTex", pipelineOutputs[i - 1]);
-                }
-            }
-        }
-    }
-
-    /// <summary>
     /// This public method can be called by other Udon scripts or UI events to run the pipeline.
     /// </summary>
     public void _RunPipeline()
@@ -108,25 +64,25 @@ public class LinearPipeline : UdonSharpBehaviour
         // --- Pre-flight Checks ---
         if (sourceInput == null)
         {
-            Debug.LogError("[LinearUdonPipeline] Source Input is not assigned!", this);
+            Debug.LogError("[LinearPipeline] Source Input is not assigned!", this);
             return;
         }
 
         if (effectMaterials == null || effectMaterials.Length == 0)
         {
-            Debug.LogError("[LinearUdonPipeline] No Effect Materials have been assigned!", this);
+            Debug.LogError("[LinearPipeline] No Effect Materials have been assigned!", this);
             return;
         }
 
         if (pipelineOutputs == null || pipelineOutputs.Length == 0)
         {
-            Debug.LogError("[LinearUdonPipeline] No Pipeline Outputs have been assigned!", this);
+            Debug.LogError("[LinearPipeline] No Pipeline Outputs have been assigned!", this);
             return;
         }
 
         if (effectMaterials.Length != pipelineOutputs.Length)
         {
-            Debug.LogError("[LinearUdonPipeline] The number of materials does not match the number of output textures!", this);
+            Debug.LogError("[LinearPipeline] The number of materials does not match the number of output textures!", this);
             return;
         }
 
