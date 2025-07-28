@@ -128,8 +128,7 @@ Shader "yum_food/fft"
                 // Pass through mode
                 if (_Passthrough > 0.5)
                 {
-                  float2 uv = (pixel_index + 0.5f) / _N;
-                  float3 col = _MainTex.SampleLevel(point_clamp_s, uv, 0).rgb;
+                  float3 col = _MainTex.SampleLevel(point_clamp_s, i.uv, 0).rgb;
                   if (_LDS > 0.5) {
                     col += PHI * _Time[0];
                     col = frac(col);
@@ -144,29 +143,27 @@ Shader "yum_food/fft"
                 bool is_row_stage = (_Stage < i.num_stages_per_dim);
                 int coord = is_row_stage ? x : y;
 
-                // Calculate butterfly indices (simple integer math)
-                int group = coord / i.butterfly_size;
-                int idx_in_group = coord % i.butterfly_size;
-                int wing = idx_in_group / i.span;
-                int idx_in_wing = idx_in_group % i.span;
-
-                // Accumulate DFT sum
-                float sum_real = 0.0;
-                float sum_imag = 0.0;
+                // Calculate butterfly indices
+                const int group = coord / i.butterfly_size;
+                const int idx_in_group = coord % i.butterfly_size;
+                const int wing = idx_in_group / i.span;
+                const int idx_in_wing = idx_in_group % i.span;
 
                 // Main DFT loop
+                float sum_real = 0.0;
+                float sum_imag = 0.0;
                 for (int j = 0; j < _Radix; j++)
                 {
                     // Calculate input position
-                    int input_pos = group * i.butterfly_size + j * i.span + idx_in_wing;
+                    const int input_pos = group * i.butterfly_size + j * i.span + idx_in_wing;
 
                     // Read input value
                     float in_real, in_imag;
                     if (is_row_stage)
                     {
-                        float2 input_uv = float2((input_pos + 0.5) / (float)_N, i.uv.y);
-                        float4 input_tex = _MainTex.SampleLevel(point_clamp_s, input_uv, 0);
-                        if (_Stage == 0) {
+                        const float2 input_uv = float2((input_pos + 0.5) / (float)_N, i.uv.y);
+                        const float4 input_tex = _MainTex.SampleLevel(point_clamp_s, input_uv, 0);
+                        if (_Stage == 0 && _Inverse < 0.5) {
                             // Assume that input is grayscale and real-valued.
                             in_real = input_tex.x;
                             in_imag = 0;
@@ -177,17 +174,16 @@ Shader "yum_food/fft"
                     }
                     else
                     {
-                        float xuv = (x + 0.5) / _N;
-                        float2 input_uv = float2(xuv, (input_pos + 0.5) / (float)_N);
+                        float2 input_uv = float2(i.uv.x, (input_pos + 0.5) / (float)_N);
                         float4 input_tex = _MainTex.SampleLevel(point_clamp_s, input_uv, 0);
                         in_real = input_tex.x;
                         in_imag = input_tex.y;
                     }
 
                     // Read DFT coefficient
-                    float2 coeff = _Inverse > 0.5 ? IDFT_MATRIX[wing][j] : DFT_MATRIX[wing][j];
-                    float coeff_real = coeff.x;
-                    float coeff_imag = coeff.y;
+                    const float2 coeff = _Inverse > 0.5 ? IDFT_MATRIX[wing][j] : DFT_MATRIX[wing][j];
+                    const float coeff_real = coeff.x;
+                    const float coeff_imag = coeff.y;
 
                     // Complex multiply-accumulate
                     sum_real += coeff_real * in_real - coeff_imag * in_imag;
@@ -198,15 +194,15 @@ Shader "yum_food/fft"
                 float out_real, out_imag;
                 if (wing > 0 && idx_in_wing > 0)
                 {
-                    int twiddle_idx = wing * idx_in_wing;
+                    const int twiddle_idx = wing * idx_in_wing;
                     float2 tw;
-                    
+
                     if (_Stage % 2 == 0) {
                         tw = _Inverse > 0.5 ? STAGE0_TWIDDLES_INV[twiddle_idx] : STAGE0_TWIDDLES[twiddle_idx];
                     } else {
                         tw = _Inverse > 0.5 ? STAGE1_TWIDDLES_INV[twiddle_idx] : STAGE1_TWIDDLES[twiddle_idx];
                     }
-                    
+
                     float tw_real = tw.x;
                     float tw_imag = tw.y;
 
