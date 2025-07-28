@@ -7,13 +7,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ifft_256x256_r16_3
+  m_Name: ifft_256x256_r16_3_bitrev
   m_Shader: {fileID: 4800000, guid: 174262b1c731b7b45b2261d18f2cf325, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
-  - _INVERSE_ON
+  - _BITREVERSAL_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -45,7 +45,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 8400000, guid: a1dee43ec96199e4a9897f4d83fde0dd, type: 2}
+        m_Texture: {fileID: 8400000, guid: 3cad81fb96a636d47a43e9588609acf5, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -62,7 +62,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BitReversal: 0
+    - _BitReversal: 1
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
@@ -70,7 +70,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _Inverse: 1
+    - _Inverse: 0
     - _LDS: 0
     - _Luminance: 0
     - _Metallic: 0
@@ -84,7 +84,7 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _Stage: 3
+    - _Stage: 0
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:

@@ -13,6 +13,8 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
+  - _LDS_ON
+  - _LUMINANCE_ON
   - _PASSTHROUGH_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -45,7 +47,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 451baf2d778907c40abcfdd01568dbec, type: 3}
+        m_Texture: {fileID: 2800000, guid: d0dba03849af9df4fae990e250f66246, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -62,6 +64,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _BitReversal: 0
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
@@ -70,13 +73,15 @@ Material:
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _Inverse: 0
-    - _LDS: 0
+    - _LDS: 1
+    - _Luminance: 1
     - _Metallic: 0
     - _Mode: 0
     - _N: 256
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _PassThrough: 1
+    - _Passthrough: 1
     - _Radix: 16
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

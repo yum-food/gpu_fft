@@ -200,13 +200,13 @@ Shader "yum_food/fft"
                 {
                     int twiddle_idx = wing * idx_in_wing;
                     float2 tw;
-
+                    
                     if (_Stage % 2 == 0) {
                         tw = _Inverse > 0.5 ? STAGE0_TWIDDLES_INV[twiddle_idx] : STAGE0_TWIDDLES[twiddle_idx];
                     } else {
                         tw = _Inverse > 0.5 ? STAGE1_TWIDDLES_INV[twiddle_idx] : STAGE1_TWIDDLES[twiddle_idx];
                     }
-
+                    
                     float tw_real = tw.x;
                     float tw_imag = tw.y;
 

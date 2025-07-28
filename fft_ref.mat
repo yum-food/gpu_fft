@@ -7,13 +7,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ifft_256x256_r16_3
+  m_Name: fft_ref
   m_Shader: {fileID: 4800000, guid: 174262b1c731b7b45b2261d18f2cf325, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
-  - _INVERSE_ON
+  - _PASSTHROUGH_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -45,7 +45,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 8400000, guid: a1dee43ec96199e4a9897f4d83fde0dd, type: 2}
+        m_Texture: {fileID: 2800000, guid: d3b73aebac11d354bb702321288d9099, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -70,7 +70,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _Inverse: 1
+    - _Inverse: 0
     - _LDS: 0
     - _Luminance: 0
     - _Metallic: 0
@@ -78,13 +78,13 @@ Material:
     - _N: 256
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _PassThrough: 0
-    - _Passthrough: 0
+    - _PassThrough: 1
+    - _Passthrough: 1
     - _Radix: 16
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _Stage: 3
+    - _Stage: 0
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:

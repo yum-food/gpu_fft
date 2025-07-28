@@ -1,12 +1,12 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!86 &8600000
-CustomRenderTexture:
+--- !u!84 &8400000
+RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: fft_256x256_r16_1
+  m_Name: fft_stage3
   m_ImageContentsHash:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000
@@ -29,7 +29,7 @@ CustomRenderTexture:
   m_EnableRandomWrite: 0
   m_TextureSettings:
     serializedVersion: 2
-    m_FilterMode: 0
+    m_FilterMode: 1
     m_Aniso: 0
     m_MipBias: 0
     m_WrapU: 1
@@ -38,18 +38,3 @@ CustomRenderTexture:
   m_Dimension: 2
   m_VolumeDepth: 1
   m_ShadowSamplingMode: 2
-  m_Material: {fileID: 2100000, guid: baecfb2a8397f824280169e46d6735f0, type: 2}
-  m_InitSource: 1
-  m_InitMaterial: {fileID: 2100000, guid: 26596d311a37a3c45a64cee1c5576bd6, type: 2}
-  m_InitColor: {r: 1, g: 1, b: 1, a: 1}
-  m_InitTexture: {fileID: 0}
-  m_UpdateMode: 1
-  m_InitializationMode: 1
-  m_UpdateZoneSpace: 0
-  m_CurrentUpdateZoneSpace: 0
-  m_UpdateZones: []
-  m_UpdatePeriod: 0
-  m_ShaderPass: 0
-  m_CubemapFaceMask: 4294967295
-  m_DoubleBuffered: 0
-  m_WrapUpdateZones: 0
