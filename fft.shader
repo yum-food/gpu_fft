@@ -24,6 +24,8 @@ Shader "yum_food/fft"
             #pragma fragment frag
 
             #include "UnityCG.cginc"
+            #define RADIX 16
+            #define N 256
             #define GPU_FFT_RADIX16
             #define GPU_FFT_RADIX16_N256
             #include "fft_twiddle_tables.cginc"
@@ -106,6 +108,13 @@ Shader "yum_food/fft"
               return dot(color, float3(0.2126, 0.7152, 0.0722));
             }
 
+            float4 cmul_2x(float4 a, float2 b) {
+                float4 r;
+                r.xz = a.xz * b.x - a.yw * b.y;
+                r.yw = a.xz * b.y + a.yw * b.x;
+                return r;
+            }
+
             fixed4 frag (v2f i) : SV_Target
             {
                 // Extract coordinates
@@ -150,80 +159,56 @@ Shader "yum_food/fft"
                 const int idx_in_wing = idx_in_group % i.span;
 
                 // Main DFT loop
-                float sum_real = 0.0;
-                float sum_imag = 0.0;
-                for (int j = 0; j < _Radix; j++)
+                float4 sum = float4(0.0, 0.0, 0.0, 0.0);
+                for (int j = 0; j < RADIX; j++)
                 {
                     // Calculate input position
                     const int input_pos = group * i.butterfly_size + j * i.span + idx_in_wing;
 
                     // Read input value
-                    float in_real, in_imag;
+                    float4 input_tex;
                     if (is_row_stage)
                     {
-                        const float2 input_uv = float2((input_pos + 0.5) / (float)_N, i.uv.y);
-                        const float4 input_tex = _MainTex.SampleLevel(point_clamp_s, input_uv, 0);
-                        if (_Stage == 0 && _Inverse < 0.5) {
-                            // Assume that input is grayscale and real-valued.
-                            in_real = input_tex.x;
-                            in_imag = 0;
-                        } else {
-                            in_real = input_tex.x;
-                            in_imag = input_tex.y;
-                        }
+                        const float2 input_uv = float2((input_pos + 0.5) / (float)N, i.uv.y);
+                        input_tex = _MainTex.SampleLevel(point_clamp_s, input_uv, 0);
                     }
                     else
                     {
-                        float2 input_uv = float2(i.uv.x, (input_pos + 0.5) / (float)_N);
-                        float4 input_tex = _MainTex.SampleLevel(point_clamp_s, input_uv, 0);
-                        in_real = input_tex.x;
-                        in_imag = input_tex.y;
+                        const float2 input_uv = float2(i.uv.x, (input_pos + 0.5) / (float)N);
+                        input_tex = _MainTex.SampleLevel(point_clamp_s, input_uv, 0);
                     }
 
                     // Read DFT coefficient
-                    const float2 coeff = _Inverse > 0.5 ? IDFT_MATRIX[wing][j] : DFT_MATRIX[wing][j];
-                    const float coeff_real = coeff.x;
-                    const float coeff_imag = coeff.y;
+                    const float2 coeff = _Inverse ? IDFT_MATRIX[wing][j] : DFT_MATRIX[wing][j];
 
                     // Complex multiply-accumulate
-                    sum_real += coeff_real * in_real - coeff_imag * in_imag;
-                    sum_imag += coeff_real * in_imag + coeff_imag * in_real;
+                    sum += cmul_2x(input_tex, coeff);
                 }
 
                 // Apply stage twiddle if needed
-                float out_real, out_imag;
+                float4 out_val;
                 if (wing > 0 && idx_in_wing > 0)
                 {
                     const int twiddle_idx = wing * idx_in_wing;
                     float2 tw;
 
                     if (_Stage % 2 == 0) {
-                        tw = _Inverse > 0.5 ? STAGE0_TWIDDLES_INV[twiddle_idx] : STAGE0_TWIDDLES[twiddle_idx];
+                        tw = _Inverse ? STAGE0_TWIDDLES_INV[twiddle_idx] : STAGE0_TWIDDLES[twiddle_idx];
                     } else {
-                        tw = _Inverse > 0.5 ? STAGE1_TWIDDLES_INV[twiddle_idx] : STAGE1_TWIDDLES[twiddle_idx];
+                        tw = _Inverse ? STAGE1_TWIDDLES_INV[twiddle_idx] : STAGE1_TWIDDLES[twiddle_idx];
                     }
 
-                    float tw_real = tw.x;
-                    float tw_imag = tw.y;
-
                     // Output = twiddle * sum
-                    out_real = tw_real * sum_real - tw_imag * sum_imag;
-                    out_imag = tw_real * sum_imag + tw_imag * sum_real;
+                    out_val = cmul_2x(sum, tw);
                 }
                 else
                 {
-                    out_real = sum_real;
-                    out_imag = sum_imag;
+                    out_val = sum;
                 }
-
-                // Handle final stage of inverse FFT
-                if (_Inverse > 0.5 && _Stage == i.num_stages_per_dim * 2 - 1) {
-                    float normalized = out_real / (_N * _N);
-                    return float4(normalized, normalized, normalized, 1);
+                if (_Inverse && _Stage == 3) {
+                    out_val /= (_N * _N);
                 }
-
-                // Pack complex result into RGBA
-                return float4(out_real, out_imag, 0, 1);
+                return out_val;
             }
             ENDCG
         }

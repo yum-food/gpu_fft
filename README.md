@@ -5,7 +5,8 @@ it is only suitable for use in worlds.
 
 ### Quick start
 
-Clone the repo into your unity project. Open the scene.
+Clone the repo into your unity project. Open the scene. Select "Demo_Pipeline"
+and click "Create Pipeline." Enter play mode.
 
 Run CPU simulator:
 
